@@ -2,14 +2,13 @@ package digital_ocean
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/digitalocean/godo"
 	"github.com/spf13/cast"
 	"golang.org/x/oauth2"
 
 	"kubernetes_autoscaler/config"
-	"fmt"
-	"errors"
-	"time"
 )
 
 const (
