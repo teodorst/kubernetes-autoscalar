@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	Auth map[string]interface{} `yaml:"auth"`
+	Mongo map[string]interface{} `yaml:"mongo"`
 }
 
 func GetConf() *Config {

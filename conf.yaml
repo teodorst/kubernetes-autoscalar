@@ -1,2 +1,7 @@
 auth:
     token: "62da56116e6568f73e3f41f920f65a550d72bc91acccf78512ae67c6735e2f7b"
+
+mongo:
+    host: "localhost"
+    port: 27017
+    db: "kube_metrics"
