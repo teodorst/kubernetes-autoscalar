@@ -102,8 +102,9 @@ func (metricsService *MetricsService) FetchAndStoreNewMetrics(ts int64) error {
 		return err
 	}
 
-	transformMetrics(nodesMetrics)
-	transformMetrics(podMetrics)
+	nodesMetrics = transformMetrics(nodesMetrics)
+	podMetrics = transformMetrics(podMetrics)
+
 
 	//save them
 	for _, metric := range nodesMetrics {
@@ -295,17 +296,22 @@ func fetchNodesMetrics(ts int64) ([]Metric, error) {
 	return resources, nil
 }
 
-func transformMetrics(metrics []Metric) {
+func transformMetrics(metrics []Metric) []Metric {
+	var transformedMetrics []Metric
+
 	for _, metric := range metrics {
-		metric.CPUValue /= 1000000000
-		metric.MemoryValue = metric.MemoryValue * 1024 / 1000000000
+		transformedMetrics = append(transformedMetrics,
+			Metric{ResourceName: metric.ResourceName,
+			Timestamp: metric.Timestamp, CPUValue: metric.CPUValue / 1000000000,
+			MemoryValue: metric.MemoryValue * 1024 / 1000000000})
 	}
 
+	return transformedMetrics
 }
 
 
 func (metricsService *MetricsService) processMetricsForLastHour(resources []Resource, lastHourTs int64) ([]Metric, error) {
-	processedMetrics := []Metric{}
+	var processedMetrics []Metric
 
 	for _, resource := range resources {
 		podMetrics, err := metricsService.MetricsDriver.GetLastHourMetrics(resource.Name, lastHourTs, lastHourTs + 3599)
