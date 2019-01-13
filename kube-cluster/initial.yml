@@ -1,0 +1,26 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: create the 'ubuntu' user
+      user: name=ubuntu append=yes state=present createhome=yes shell=/bin/bash
+
+    - name: allow 'ubuntu' to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        line: 'ubuntu ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+    - name: set up authorized keys for the ubuntu user
+      authorized_key: user=ubuntu key="{{item}}"
+      with_file:
+        - ~/.ssh/id_rsa.pub
+    
+    - name: set iptables free
+      become: yes
+      become_user: root
+      shell: iptables -P INPUT ACCEPT; iptables -P FORWARD ACCEPT; iptables -P OUTPUT ACCEPT
+
+    - name: set ufw free
+      become: yes
+      become_user: root
+      shell: ufw default allow outgoing; ufw default allow incoming

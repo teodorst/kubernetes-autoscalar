@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	BASE_RESOURCES_URL = "http://159.89.110.74:8001/api/v1"
-	BASE_METRCIS_URL = "http://159.89.110.74:8001/apis/metrics.k8s.io/v1beta1"
+	BASE_RESOURCES_URL = "http://159.89.30.67:8002/api/v1"
+	BASE_METRCIS_URL = "http://159.89.30.67:8002/apis/metrics.k8s.io/v1beta1"
 	)
 
 type MetricsServiceInterface interface {
