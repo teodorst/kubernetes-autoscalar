@@ -6,4 +6,3 @@ ansible_python_interpreter=/usr/bin/python3
 
 [workers]
 worker1 ansible_host=157.230.16.237 ansible_user=root
-worker2 ansible_host=104.248.253.159 ansible_user=root
