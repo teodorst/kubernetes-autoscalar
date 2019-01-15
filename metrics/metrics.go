@@ -90,32 +90,38 @@ func (metricsService *MetricsService) FetchMetrics() error {
 	return nil
 }
 
-func (metricsService *MetricsService) FetchAndStoreNewMetrics(ts int64) error {
+func (metricsService *MetricsService) FetchNewMetricsFromKubernetes(ts int64) ([]Metric, error)  {
+	var metrics []Metric
 
-	nodesMetrics, err := fetchNodesMetrics(ts)
+	nodesMetrics, err := FetchNodesMetrics(ts)
 	if err != nil {
-		return err
+		return metrics, err
 	}
 
 	podMetrics, err := fetchPodsMetrics(ts)
 	if err != nil {
+		return metrics, err
+	}
+
+	nodesMetrics = TransformMetrics(nodesMetrics)
+	podMetrics = TransformMetrics(podMetrics)
+
+	metrics = append(metrics, nodesMetrics...)
+	metrics = append(metrics, podMetrics...)
+
+	return metrics, nil
+}
+
+func (metricsService *MetricsService) FetchAndStoreNewMetrics(ts int64) error {
+
+	metrics, err := metricsService.FetchNewMetricsFromKubernetes(ts)
+	if err != nil {
 		return err
 	}
 
-	nodesMetrics = transformMetrics(nodesMetrics)
-	podMetrics = transformMetrics(podMetrics)
-
-
 	//save them
-	for _, metric := range nodesMetrics {
+	for _, metric := range metrics {
 		err := metricsService.MetricsDriver.InsertLastHourMetric(metric)
-		if err != nil {
-			return err
-		}
-	}
-
-	for _, metric := range podMetrics {
-		metricsService.MetricsDriver.InsertLastHourMetric(metric)
 		if err != nil {
 			return err
 		}
@@ -257,7 +263,7 @@ func fetchPodsMetrics(ts int64) ([]Metric, error) {
 }
 
 
-func fetchNodesMetrics(ts int64) ([]Metric, error) {
+func FetchNodesMetrics(ts int64) ([]Metric, error) {
 	resp, err := http.Get(fmt.Sprintf("%s/nodes", BASE_METRCIS_URL))
 	if err != nil {
 		return []Metric{}, err
@@ -296,7 +302,7 @@ func fetchNodesMetrics(ts int64) ([]Metric, error) {
 	return resources, nil
 }
 
-func transformMetrics(metrics []Metric) []Metric {
+func TransformMetrics(metrics []Metric) []Metric {
 	var transformedMetrics []Metric
 
 	for _, metric := range metrics {

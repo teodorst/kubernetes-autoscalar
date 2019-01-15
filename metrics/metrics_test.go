@@ -19,7 +19,7 @@ func (suite *MetricsTestsSuite) TestFetchAndStoreNewMetrics() {
 	t := suite.T()
 
 	currentTimestamp := time.Now().Unix()
-	nodesMetrics, err := fetchNodesMetrics(currentTimestamp)
+	nodesMetrics, err := FetchNodesMetrics(currentTimestamp)
 	assert.Nil(t, err, "error should be nil")
 
 	podMetrics, err := fetchPodsMetrics(currentTimestamp)

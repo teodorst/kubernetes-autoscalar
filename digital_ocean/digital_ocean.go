@@ -18,8 +18,15 @@ const (
 )
 
 type DigitalOcean interface {
-	DropletList () ([]godo.Droplet, error)
-	CreateSlaveDroplet (name string) (godo.Droplet, error)
+	DropletList () ([]Droplet, error)
+	CreateSlaveDroplet (name string) (Droplet, error)
+	GetDroplet(ID int) (Droplet, error)
+	CheckStatusOfDroplet(ID int) (string, error)
+	ShutdownOnDroplet(ID int) (int, error)
+	PowerOffDroplet(ID int) (int, error)
+	PowerOnDroplet(ID int) (int, error)
+	RebootDroplet(ID int) (int, error)
+	CheckDropletAction(dropletID, actionID int) (string, error)
 }
 
 
@@ -128,7 +135,6 @@ func (digitalOcean *digitalOcean) CreateSlaveDroplet(name string) (Droplet, erro
 
 	for _, droplet := range currentDroplets {
 		if droplet.Name == name {
-			fmt.Println("Blana?")
 			return Droplet{}, fmt.Errorf("A droplet with name: %s already exists", name)
 		}
 	}
@@ -138,8 +144,10 @@ func (digitalOcean *digitalOcean) CreateSlaveDroplet(name string) (Droplet, erro
 		Region: "fra1",
 		Size:   "s-1vcpu-1gb",
 		Image: godo.DropletCreateImage{
-			Slug: "docker-18-04",
+			ID: 41695378,
 		},
+		PrivateNetworking: true,
+		SSHKeys: []godo.DropletCreateSSHKey{{ID: 23483771}},
 	}
 
 	digitalOceanDroplet, _, err := digitalOcean.client.Droplets.Create(ctx, createRequest)
@@ -154,14 +162,24 @@ func (digitalOcean *digitalOcean) CreateSlaveDroplet(name string) (Droplet, erro
 	return simplifyDropletFormat(digitalOceanDroplet), nil
 }
 
+func (digitalOcean *digitalOcean) GetDroplet(ID int) (Droplet, error) {
+	ctx := context.TODO()
+	droplet, _, err := digitalOcean.client.Droplets.Get(ctx, ID)
+	if err != nil {
+		return Droplet{}, err
+	}
+
+	return simplifyDropletFormat(droplet), nil
+}
+
 func (digitalOcean *digitalOcean) CheckStatusOfDroplet(ID int) (string, error) {
 	ctx := context.TODO()
 	droplet, _, err := digitalOcean.client.Droplets.Get(ctx, ID)
-	
+
 	if err != nil {
 		return "", err
 	}
-	
+
 	return droplet.Status, nil
 }
 
@@ -235,23 +253,26 @@ func (digitalOcean *digitalOcean) CheckDropletAction(dropletID, actionID int) (s
 	return action.Status, nil
 }
 
-func simplifyDropletFormat(droplet *godo.Droplet) Droplet {
-	return Droplet{
-		ID: droplet.ID,
-		Name: droplet.Name,
-		SizeSlug: droplet.SizeSlug,
-		IP: droplet.Networks.V4[0].IPAddress,
-		CreatedAt: droplet.Created,
-		Image: image {
-			ID: droplet.Image.ID,
-			Slug: droplet.Image.Slug,
-			Name: droplet.Image.Name,
+func simplifyDropletFormat(dropletResponse *godo.Droplet) Droplet {
+	droplet := Droplet{
+		ID: dropletResponse.ID,
+		Name: dropletResponse.Name,
+			SizeSlug: dropletResponse.SizeSlug,
+			CreatedAt: dropletResponse.Created,
+			Image: image {
+				ID: dropletResponse.Image.ID,
+				Name: dropletResponse.Image.Name,
+			},
+			Stats: dropletStats{
+				Memory: dropletResponse.Memory,
+				Vcpus: dropletResponse.Vcpus,
+				Disk: dropletResponse.Disk,
 		},
-		Stats: dropletStats{
-			Memory: droplet.Memory,
-			Vcpus: droplet.Vcpus,
-			Disk: droplet.Disk,
-		},
-		Status: droplet.Status,
+			Status: dropletResponse.Status,
 	}
+	if len(dropletResponse.Networks.V4) > 0 {
+		droplet.IP = dropletResponse.Networks.V4[0].IPAddress
+	}
+	return droplet
+
 }

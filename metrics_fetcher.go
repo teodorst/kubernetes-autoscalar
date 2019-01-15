@@ -22,7 +22,7 @@ func main() {
 	for {
 		metricsService.FetchMetrics()
 
-		time.Sleep(10 * time.Second)
+		time.Sleep(30 * time.Second)
 	}
 
 }
